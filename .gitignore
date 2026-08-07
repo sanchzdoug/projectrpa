@@ -1,0 +1,6 @@
+# Dados coletados dos ambientes do cliente — configuração GxP, prints de tela,
+# nomes de usuários. NUNCA vão para o repositório remoto.
+dados/
+node_modules/
+*.docx
+*.log
