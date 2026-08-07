@@ -1,0 +1,17 @@
+{
+  "name": "se-mapper",
+  "version": "1.0.0",
+  "description": "Levantamento e comparacao de configuracao do SoftExpert Suite (2.1.8 a 3.1), com evidencia em imagem",
+  "main": "se.js",
+  "bin": { "se-mapper": "se.js" },
+  "scripts": {
+    "postinstall": "playwright install chromium",
+    "painel": "node se.js painel",
+    "verificar": "node ferramentas/verificar-ambiente.js"
+  },
+  "dependencies": {
+    "playwright": "^1.48.0"
+  },
+  "engines": { "node": ">=18" },
+  "private": true
+}

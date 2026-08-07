@@ -138,6 +138,8 @@ async function cmdStatus() {
       case 'andar': await require('./lib/andar').executar(o); break;
       case 'relatorio-modulo': require('./lib/relatorio-modulo').executar(o); break;
       case 'fila': require('./lib/fila').executar(o); break;
+      case 'aceitar': require('./lib/aceite').aceitar(o); break;
+      case 'expurgar': require('./lib/aceite').expurgar(o); break;
       case 'status': await cmdStatus(); break;
       default: console.log(AJUDA);
     }
