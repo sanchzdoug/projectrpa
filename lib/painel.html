@@ -1,0 +1,510 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SE Mapper — instrumento de verificação</title>
+
+<!--
+  A linguagem visual vem do mundo do documento controlado: campo com legenda
+  encaixada na régua superior, dado em monoespaçada tabular, carimbo para o
+  estado. Nada de cartão, sombra ou canto arredondado — este painel é um
+  instrumento de registro, e a forma diz isso antes do texto.
+-->
+<style>
+:root{
+  --papel:#FAF9F6; --papel-2:#F3F1EC; --tinta:#12161C; --tenue:#6B7280;
+  --regua:#CBD0D8; --regua-2:#E3E5E9;
+  --indigo:#23325C;              /* estrutura: o azul do documento controlado */
+  --carimbo:#A4243B;             /* acesso negado — decisão do cliente */
+  --ambar:#9A5A16;               /* inconclusivo — limitação da ferramenta */
+  --verde:#17614C;               /* verificado */
+  --display:"Segoe UI Variable Display","Segoe UI",system-ui,sans-serif;
+  --corpo:"Segoe UI",system-ui,sans-serif;
+  --dado:ui-monospace,"Cascadia Mono","Consolas","SF Mono",monospace;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--papel);color:var(--tinta);font-family:var(--corpo);
+  font-size:14px;line-height:1.5}
+h1,h2,h3{margin:0;font-family:var(--display);font-weight:700;letter-spacing:-.02em}
+button{font:inherit;cursor:pointer}
+a{color:var(--indigo)}
+
+/* ---------------------------------------------------- espinha de estado */
+.espinha{position:sticky;top:0;z-index:20;background:var(--tinta);color:var(--papel);
+  border-bottom:2px solid var(--tinta)}
+.espinha__c{max-width:1180px;margin:0 auto;padding:11px 22px;
+  display:flex;align-items:baseline;gap:20px;flex-wrap:wrap}
+.marca{font-family:var(--display);font-weight:700;font-size:15px;letter-spacing:.22em}
+.marca b{font-weight:700}
+.marca span{opacity:.5;font-weight:400;letter-spacing:.14em}
+.espinha__d{margin-left:auto;display:flex;gap:22px;align-items:baseline;
+  font-family:var(--dado);font-size:11.5px;letter-spacing:.06em}
+.espinha__d i{font-style:normal;opacity:.55;text-transform:uppercase;letter-spacing:.14em;
+  margin-right:7px;font-size:10px}
+.pulso{display:inline-block;width:7px;height:7px;border-radius:50%;
+  background:#F0B429;margin-right:7px;vertical-align:middle}
+.pulso--on{background:#4ADE80;box-shadow:0 0 0 3px rgba(74,222,128,.18)}
+.pulso--off{background:#F87171}
+
+/* ---------------------------------------------------- tese */
+.tese{max-width:1180px;margin:0 auto;padding:34px 22px 6px}
+.tese h1{font-size:clamp(26px,4vw,40px);line-height:1.06;max-width:19ch}
+.tese h1 em{font-style:normal;color:var(--indigo)}
+.tese p{margin:12px 0 0;max-width:62ch;color:var(--tenue);font-size:14.5px}
+
+/* ---------------------------------------------------- campo com legenda */
+.campo{max-width:1180px;margin:26px auto;padding:0 22px}
+.campo__q{border:1px solid var(--regua);background:#fff;position:relative;padding:26px 20px 20px}
+.campo__l{position:absolute;top:-8px;left:16px;background:#fff;padding:0 9px;
+  font-family:var(--dado);font-size:10px;font-weight:600;letter-spacing:.19em;
+  text-transform:uppercase;color:var(--indigo)}
+.campo__n{position:absolute;top:-8px;right:16px;background:#fff;padding:0 9px;
+  font-family:var(--dado);font-size:10px;letter-spacing:.12em;color:var(--tenue)}
+
+/* ---------------------------------------------------- razão de cobertura */
+.razao{display:grid;grid-template-columns:repeat(5,1fr);border-left:1px solid var(--regua-2)}
+.razao__i{border-right:1px solid var(--regua-2);padding:4px 16px 2px}
+.razao__v{font-family:var(--dado);font-size:30px;font-weight:600;font-variant-numeric:tabular-nums;
+  letter-spacing:-.02em;line-height:1.1}
+.razao__r{font-family:var(--dado);font-size:9.5px;letter-spacing:.17em;text-transform:uppercase;
+  color:var(--tenue);margin-top:5px}
+.razao__i--neg .razao__v{color:var(--carimbo)}
+.razao__i--inc .razao__v{color:var(--ambar)}
+.razao__i--ver .razao__v{color:var(--verde)}
+.nota{font-size:12.5px;color:var(--tenue);margin:14px 0 0;max-width:74ch}
+.nota b{color:var(--tinta);font-weight:600}
+
+/* ---------------------------------------------------- árvore */
+.arv{border-top:1px solid var(--regua-2);max-height:60vh;overflow:auto;margin-top:2px}
+.arv__c{border-bottom:1px solid var(--regua-2)}
+.arv__ch{display:flex;align-items:baseline;gap:12px;padding:9px 4px;cursor:pointer;user-select:none}
+.arv__ch:hover{background:var(--papel-2)}
+.arv__seta{font-family:var(--dado);font-size:10px;color:var(--tenue);width:10px;flex:none}
+.arv__nome{font-family:var(--display);font-weight:600;font-size:14px}
+.arv__barra{flex:1;height:3px;background:var(--regua-2);margin:0 6px;position:relative;min-width:70px}
+.arv__barra i{position:absolute;inset:0 auto 0 0;background:var(--indigo)}
+.arv__n{font-family:var(--dado);font-size:11px;color:var(--tenue);
+  font-variant-numeric:tabular-nums;letter-spacing:.04em;flex:none}
+.arv__t{display:none;padding-bottom:8px}
+.arv__c--ab .arv__t{display:block}
+.arv__acoes{display:flex;gap:7px;padding:3px 0 8px 22px}
+.arv__acoes button{font-family:var(--dado);font-size:10px;letter-spacing:.1em;text-transform:uppercase;
+  padding:3px 9px;border:1px solid var(--regua);background:#fff;color:var(--tenue)}
+.arv__acoes button:hover{border-color:var(--indigo);color:var(--indigo)}
+.arv__l{display:flex;align-items:center;gap:11px;padding:3px 4px 3px 22px;
+  font-family:var(--dado);font-size:12px}
+.arv__l:hover{background:var(--papel-2)}
+.arv__l input{margin:0;accent-color:var(--indigo)}
+.arv__cod{font-weight:600;min-width:58px;letter-spacing:.03em}
+.arv__f{flex:1;font-family:var(--corpo);font-size:13px;white-space:nowrap;overflow:hidden;
+  text-overflow:ellipsis}
+.arv__s{font-size:10.5px;color:var(--tenue);letter-spacing:.05em;flex:none}
+.arv__s b{color:var(--carimbo);font-weight:600}
+.arv__s--ok{color:var(--verde)}
+
+/* carimbo de profundidade: a decisão do cliente, visível na linha */
+.selo{font-family:var(--dado);font-size:9px;letter-spacing:.13em;text-transform:uppercase;
+  padding:1px 6px;border:1px solid currentColor;flex:none;opacity:.85}
+.selo--completo{color:var(--verde)}
+.selo--navegar{color:var(--indigo)}
+.selo--evidenciar{color:var(--tenue)}
+.selo--sem{color:var(--regua);border-style:dashed}
+
+/* ---------------------------------------------------- controles */
+.linha{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:16px}
+.bt{font-family:var(--dado);font-size:11px;letter-spacing:.14em;text-transform:uppercase;
+  padding:9px 17px;border:1px solid var(--tinta);background:var(--tinta);color:var(--papel)}
+.bt:hover:not(:disabled){background:var(--indigo);border-color:var(--indigo)}
+.bt:disabled{opacity:.3;cursor:not-allowed}
+.bt--sec{background:#fff;color:var(--tinta)}
+.bt--sec:hover:not(:disabled){background:var(--papel-2);color:var(--indigo)}
+.bt--perigo{background:#fff;color:var(--carimbo);border-color:var(--carimbo)}
+.dica{font-family:var(--dado);font-size:11px;color:var(--tenue);letter-spacing:.03em}
+
+/* ---------------------------------------------------- ambientes */
+.amb{display:flex;align-items:baseline;gap:14px;padding:10px 0;border-bottom:1px solid var(--regua-2)}
+.amb:last-of-type{border-bottom:0}
+.amb__n{font-family:var(--display);font-weight:600;font-size:14px}
+.amb__p{font-family:var(--dado);font-size:9px;letter-spacing:.15em;text-transform:uppercase;
+  border:1px solid var(--regua);padding:1px 6px;color:var(--tenue)}
+.amb__u{font-family:var(--dado);font-size:11px;color:var(--tenue);flex:1;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.amb__d{font-family:var(--dado);font-size:11px;color:var(--tenue);font-variant-numeric:tabular-nums}
+.amb--ativo{background:var(--papel-2);margin:0 -20px;padding-left:20px;padding-right:20px;
+  border-left:3px solid var(--indigo)}
+.campos{display:grid;grid-template-columns:1fr 2fr auto auto;gap:10px;align-items:end;margin-top:16px}
+label{display:block;font-family:var(--dado);font-size:9.5px;letter-spacing:.16em;
+  text-transform:uppercase;color:var(--tenue);margin-bottom:5px}
+input,select{width:100%;font-family:var(--dado);font-size:12.5px;padding:8px 10px;
+  border:1px solid var(--regua);background:#fff;color:var(--tinta)}
+input:focus,select:focus,button:focus-visible,.arv__ch:focus-visible{outline:2px solid var(--indigo);outline-offset:1px}
+
+/* ---------------------------------------------------- execução */
+.exec{font-family:var(--dado);font-size:11.5px;background:var(--tinta);color:#D7DBE0;
+  padding:13px 15px;max-height:180px;overflow:auto;white-space:pre-wrap;line-height:1.55}
+.exec b{color:#fff;font-weight:600}
+.rel{display:flex;align-items:baseline;gap:12px;padding:7px 0;border-bottom:1px solid var(--regua-2);
+  font-family:var(--dado);font-size:12px}
+.rel:last-child{border-bottom:0}
+.rel a{flex:1;text-decoration:none}
+.rel a:hover{text-decoration:underline}
+.rel span{color:var(--tenue);font-size:11px}
+.vazio{font-family:var(--dado);font-size:11.5px;color:var(--tenue);letter-spacing:.04em}
+
+@media(max-width:820px){
+  .razao{grid-template-columns:repeat(2,1fr)}
+  .razao__i{border-bottom:1px solid var(--regua-2)}
+  .campos{grid-template-columns:1fr}
+  .espinha__d{width:100%;margin-left:0}
+}
+@media(prefers-reduced-motion:no-preference){
+  .campo{animation:sobe .5s cubic-bezier(.2,.7,.3,1) backwards}
+  .campo:nth-of-type(2){animation-delay:.04s}
+  .campo:nth-of-type(3){animation-delay:.08s}
+  @keyframes sobe{from{opacity:0;transform:translateY(7px)}}
+}
+</style>
+
+<header class="espinha">
+  <div class="espinha__c">
+    <div class="marca"><b>SE</b> <span>MAPPER</span></div>
+    <div class="espinha__d">
+      <div><i>ambiente</i><span id="e-amb">—</span></div>
+      <div><i>sessão</i><span id="e-ses"><span class="pulso"></span>verificando</span></div>
+      <div><i>execução</i><span id="e-exec">parada</span></div>
+    </div>
+  </div>
+</header>
+
+<section class="tese">
+  <h1 id="tese-t">Lendo o estado…</h1>
+  <p id="tese-p"></p>
+</section>
+
+<section class="campo">
+  <div class="campo__q">
+    <div class="campo__l">Cobertura da verificação</div>
+    <div class="campo__n" id="cob-amb">—</div>
+    <div class="razao" id="razao"></div>
+    <p class="nota">Quatro situações que o relatório nunca mistura. <b>Verificado</b> é leitura
+      confirmada. <b>Acesso negado</b> é decisão do cliente: liberar o perfil ou conferir por conta
+      própria. <b>Sem detalhe</b> é escopo que você definiu. <b>Inconclusivo</b> é limitação da
+      ferramenta — e só esta última é problema meu.</p>
+  </div>
+</section>
+
+<section class="campo">
+  <div class="campo__q">
+    <div class="campo__l">Componentes e telas</div>
+    <div class="campo__n" id="arv-n">—</div>
+    <p class="nota" style="margin:0 0 6px">Marque o que deve ser percorrido. O carimbo mostra a
+      profundidade que você já definiu para cada tela; sem carimbo, ela ainda não tem regra.</p>
+    <div class="arv" id="arv"><p class="vazio">carregando…</p></div>
+    <div class="linha">
+      <button class="bt" id="bt-perc" disabled>Percorrer marcadas</button>
+      <button class="bt bt--sec" id="bt-rel" disabled>Gerar relatório</button>
+      <span class="dica" id="sel-info"></span>
+    </div>
+  </div>
+</section>
+
+<section class="campo">
+  <div class="campo__q">
+    <div class="campo__l">Ambiente e sessão</div>
+    <div id="ambs"></div>
+    <div class="campos">
+      <div><label for="f-nome">Nome</label><input id="f-nome" placeholder="Homologação"></div>
+      <div><label for="f-url">Endereço</label><input id="f-url" type="url" placeholder="https://cliente.softexpert.app"></div>
+      <div><label for="f-papel">Papel</label><select id="f-papel"><option>origem</option><option>destino</option></select></div>
+      <div><button class="bt bt--sec" id="bt-add">Adicionar</button></div>
+    </div>
+    <div class="linha">
+      <button class="bt" id="bt-login">Abrir navegador para login</button>
+      <button class="bt bt--sec" id="bt-map">Mapear componentes</button>
+      <button class="bt bt--sec" id="bt-comp">Comparar ambientes</button>
+      <button class="bt bt--perigo" id="bt-parar" disabled>Interromper</button>
+    </div>
+  </div>
+</section>
+
+<section class="campo">
+  <div class="campo__q">
+    <div class="campo__l">Execução</div>
+    <div class="campo__n" id="exec-n">—</div>
+    <div class="exec" id="exec">Nenhuma etapa em andamento.</div>
+  </div>
+</section>
+
+<section class="campo">
+  <div class="campo__q">
+    <div class="campo__l">Relatórios</div>
+    <div id="rels"></div>
+  </div>
+</section>
+
+<script>
+const $ = s => document.querySelector(s);
+const esc = t => String(t == null ? '' : t).replace(/[&<>"]/g, m =>
+  ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]));
+const api = (u, b) => fetch(u, b ? {method:'POST', headers:{'Content-Type':'application/json'},
+  body: JSON.stringify(b)} : undefined).then(r => r.json());
+
+let E = null, ARV = null, MARCADAS = new Set(), ABERTOS = new Set(), assinatura = '';
+
+/* ---------------------------------------------------------------- árvore */
+async function carregarArvore(){
+  const r = await api('/api/componentes').catch(() => null);
+  if (!r || !r.componentes) { $('#arv').innerHTML = '<p class="vazio">mapeamento ainda não disponível</p>'; return; }
+  ARV = r.componentes;
+  MARCADAS = new Set();
+  ARV.forEach(c => c.telas.forEach(t => { if (t.marcada) MARCADAS.add(t.pageId); }));
+  desenharArvore();
+}
+
+function desenharArvore(){
+  const alvo = $('#arv');
+  const rol = alvo.scrollTop;
+  let h = '', totalTelas = 0, totalLidas = 0;
+  for (const c of ARV) {
+    const nM = c.telas.filter(t => MARCADAS.has(t.pageId)).length;
+    const nL = c.telas.filter(t => t.lida).length;
+    totalTelas += c.telas.length; totalLidas += nL;
+    if (!c.contratado) {
+      h += '<div class="arv__c"><div class="arv__ch" style="opacity:.45;cursor:default">' +
+        '<span class="arv__seta"></span><span class="arv__nome">' + esc(c.nome) + '</span>' +
+        '<span class="arv__barra"></span><span class="arv__n">' +
+        esc(c.observacao || 'não contratado') + '</span></div></div>';
+      continue;
+    }
+    const pct = c.telas.length ? Math.round(nL * 100 / c.telas.length) : 0;
+    h += '<div class="arv__c' + (ABERTOS.has(c.nome) ? ' arv__c--ab' : '') +
+      '" data-nome="' + esc(c.nome) + '">' +
+      '<div class="arv__ch" tabindex="0" role="button" aria-expanded="' + ABERTOS.has(c.nome) + '">' +
+      '<span class="arv__seta">' + (ABERTOS.has(c.nome) ? '▾' : '▸') + '</span>' +
+      '<span class="arv__nome">' + esc(c.nome) + '</span>' +
+      '<span class="arv__barra"><i style="width:' + pct + '%"></i></span>' +
+      '<span class="arv__n">' + nL + '/' + c.telas.length +
+      (nM ? ' · ' + nM + ' marcadas' : '') + '</span></div>' +
+      '<div class="arv__t"><div class="arv__acoes" data-comp="' + esc(c.nome) + '">' +
+      '<button data-modo="1">marcar todas</button>' +
+      '<button data-modo="0">limpar</button>' +
+      '<button data-modo="2">só as não lidas</button></div>';
+    for (const t of c.telas) {
+      const p = t.profundidade;
+      const selo = p
+        ? '<span class="selo selo--' + p + '" title="' + esc(t.motivo || '') + '">' + p + '</span>'
+        : '<span class="selo selo--sem">sem regra</span>';
+      const sit = t.lida
+        ? '<span class="arv__s arv__s--ok">' + t.registros + ' reg' +
+          (t.negados ? ' · <b>' + t.negados + ' negados</b>' : '') + '</span>'
+        : '<span class="arv__s">' + (t.total ? t.total + ' reg' : '—') + '</span>';
+      h += '<label class="arv__l"><input type="checkbox" value="' + esc(t.pageId) + '"' +
+        (MARCADAS.has(t.pageId) ? ' checked' : '') + '>' +
+        '<span class="arv__cod">' + esc(t.codigo) + '</span>' +
+        '<span class="arv__f">' + esc(t.funcao) + '</span>' + selo + sit + '</label>';
+    }
+    h += '</div></div>';
+  }
+  alvo.innerHTML = h;
+  alvo.scrollTop = rol;
+  $('#arv-n').textContent = totalLidas + ' de ' + totalTelas + ' telas percorridas';
+  atualizaBotoes();
+}
+
+function componentesMarcados(){
+  const s = new Set();
+  ARV.forEach(c => c.telas.forEach(t => { if (MARCADAS.has(t.pageId)) s.add(c.nome); }));
+  return [...s];
+}
+function atualizaBotoes(){
+  const n = MARCADAS.size, comps = componentesMarcados();
+  $('#bt-perc').disabled = !n || (E && E.tarefa && !E.tarefa.fim);
+  $('#bt-rel').disabled = comps.length !== 1;
+  $('#sel-info').textContent = n
+    ? n + ' tela(s) · ' + (comps.length === 1
+        ? 'relatório de ' + comps[0]
+        : comps.length + ' componentes — marque um só para gerar relatório')
+    : 'nada marcado';
+}
+async function salvarSelecao(){
+  const telas = [];
+  ARV.forEach(c => c.telas.forEach(t => {
+    if (MARCADAS.has(t.pageId)) telas.push({pageId:t.pageId, codigo:t.codigo, componente:c.nome});
+  }));
+  await api('/api/selecao', {telas});
+  atualizaBotoes();
+}
+
+/* delegação: nomes vão em atributo, sem aspas aninhadas no HTML */
+document.addEventListener('click', ev => {
+  const bt = ev.target.closest('.arv__acoes button');
+  if (bt) {
+    ev.stopPropagation();
+    const nome = bt.parentElement.dataset.comp, modo = Number(bt.dataset.modo);
+    const c = ARV.find(x => x.nome === nome); if (!c) return;
+    c.telas.forEach(t => {
+      if (modo === 0) MARCADAS.delete(t.pageId);
+      else if (modo === 1) MARCADAS.add(t.pageId);
+      else if (!t.lida) MARCADAS.add(t.pageId);
+    });
+    desenharArvore(); salvarSelecao();
+    return;
+  }
+  const ch = ev.target.closest('.arv__ch');
+  if (ch && ch.getAttribute('role') === 'button') {
+    const c = ch.parentElement, nome = c.dataset.nome;
+    if (ABERTOS.has(nome)) ABERTOS.delete(nome); else ABERTOS.add(nome);
+    c.classList.toggle('arv__c--ab');
+    ch.querySelector('.arv__seta').textContent = ABERTOS.has(nome) ? '▾' : '▸';
+    ch.setAttribute('aria-expanded', ABERTOS.has(nome));
+  }
+});
+document.addEventListener('keydown', ev => {
+  if ((ev.key === 'Enter' || ev.key === ' ') && ev.target.classList.contains('arv__ch')) {
+    ev.preventDefault(); ev.target.click();
+  }
+});
+document.addEventListener('change', ev => {
+  const cx = ev.target;
+  if (!cx.matches('.arv__l input')) return;
+  cx.checked ? MARCADAS.add(cx.value) : MARCADAS.delete(cx.value);
+  salvarSelecao();
+});
+
+/* ---------------------------------------------------------------- ações */
+$('#bt-perc').onclick = async () => {
+  const telas = [];
+  ARV.forEach(c => c.telas.forEach(t => { if (MARCADAS.has(t.pageId)) telas.push(t.codigo); }));
+  if (!telas.length) return;
+  const r = await api('/api/acao', {comando:'andar', telas, registros:9999});
+  if (r.erro) alert(r.erro); else atualizar(true);
+};
+$('#bt-rel').onclick = async () => {
+  const comps = componentesMarcados();
+  if (comps.length !== 1) return;
+  const r = await api('/api/acao', {comando:'relatorio-modulo', modulo:comps[0]});
+  if (r.erro) alert(r.erro); else atualizar(true);
+};
+$('#bt-login').onclick = async () => { const r = await api('/api/acao',{comando:'login'}); if (r.erro) alert(r.erro); atualizar(true); };
+$('#bt-map').onclick = async () => { const r = await api('/api/acao',{comando:'map'}); if (r.erro) alert(r.erro); atualizar(true); };
+$('#bt-parar').onclick = async () => { await api('/api/parar',{}); atualizar(true); };
+$('#bt-comp').onclick = async () => {
+  const p = (E.ambientes||[]).filter(a => a.mapeado);
+  if (p.length < 2) return alert('São necessários dois ambientes mapeados.');
+  const r = await api('/api/acao',{comando:'compare', origem:p[0].slug, destino:p[1].slug});
+  if (r.erro) alert(r.erro); else atualizar(true);
+};
+$('#bt-add').onclick = async () => {
+  const nome = $('#f-nome').value.trim(), url = $('#f-url').value.trim();
+  if (!nome || !url) return alert('Informe nome e endereço.');
+  const r = await api('/api/ambiente', {nome, url, papel:$('#f-papel').value});
+  if (r.erro) return alert(r.erro);
+  $('#f-nome').value = ''; $('#f-url').value = '';
+  atualizar(true);
+};
+
+/* ---------------------------------------------------------------- estado */
+function razao(a){
+  const itens = [
+    ['telas percorridas', a ? a.varridas : 0, ''],
+    ['verificadas', a ? a.lidas : 0, 'ver'],
+    ['sem leitura', a ? a.semLeitura : 0, 'inc'],
+    ['exceções', a ? a.excecoes : 0, 'neg'],
+    ['taxa de falha', a ? (a.taxaFalha + '%') : '—', ''],
+  ];
+  $('#razao').innerHTML = itens.map(([r, v, k]) =>
+    '<div class="razao__i' + (k ? ' razao__i--' + k : '') + '">' +
+    '<div class="razao__v">' + esc(v) + '</div><div class="razao__r">' + r + '</div></div>').join('');
+}
+
+function tese(){
+  const a = (E.ambientes||[]).find(x => x.slug === E.atual);
+  const t = $('#tese-t'), p = $('#tese-p');
+  if (!E.ambientes.length) {
+    t.innerHTML = 'Nenhum ambiente <em>cadastrado</em>.';
+    p.textContent = 'Comece pelo endereço do SoftExpert que será verificado.'; return;
+  }
+  if (!E.sessao) {
+    t.innerHTML = 'Sessão do navegador <em>encerrada</em>.';
+    p.textContent = 'O login é manual e a janela precisa continuar aberta. Abra o navegador e entre no sistema.'; return;
+  }
+  if (!a || !a.mapeado) {
+    t.innerHTML = 'Ambiente pronto para <em>mapear</em>.';
+    p.textContent = 'O mapeamento percorre componentes e menus sem abrir registro — é a leitura rasa que antecede a escolha do que detalhar.'; return;
+  }
+  const pend = a.semLeitura || 0;
+  t.innerHTML = a.varridas + ' de ' + a.previstas + ' telas <em>percorridas</em>.';
+  p.textContent = pend
+    ? pend + ' tela(s) sem leitura confirmada. São limitação da ferramenta e estão listadas no relatório como pendência, não como resultado.'
+    : 'Toda tela percorrida devolveu leitura confirmada. Marque o que deve ser detalhado e gere o relatório do componente.';
+}
+
+function ambientes(){
+  const h = (E.ambientes||[]).map(a =>
+    '<div class="amb' + (a.slug === E.atual ? ' amb--ativo' : '') + '">' +
+    '<span class="amb__n">' + esc(a.nome) + '</span>' +
+    '<span class="amb__p">' + esc(a.papel) + '</span>' +
+    '<span class="amb__u">' + esc(a.url) + '</span>' +
+    '<span class="amb__d">' + (a.mapeado ? a.varridas + '/' + a.previstas + ' · falha ' + a.taxaFalha + '%' : 'não mapeado') + '</span>' +
+    (a.slug === E.atual ? '' : '<button class="bt bt--sec" data-ativar="' + esc(a.slug) + '">ativar</button>') +
+    '</div>').join('');
+  $('#ambs').innerHTML = h || '<p class="vazio">nenhum ambiente cadastrado</p>';
+}
+document.addEventListener('click', async ev => {
+  const b = ev.target.closest('[data-ativar]');
+  if (!b) return;
+  await api('/api/ativar', {slug:b.dataset.ativar});
+  ARV = null; atualizar(true);
+});
+
+function execucao(){
+  const t = E.tarefa, s = E.sessaoProc;
+  const viva = t && !t.fim;
+  $('#e-exec').textContent = viva ? (t.nome || 'em andamento') : 'parada';
+  $('#bt-parar').disabled = !viva;
+  $('#exec-n').textContent = viva ? 'em andamento' : (t ? 'concluída' : '—');
+  const linhas = (t && t.linhas) || (s && s.linhas) || [];
+  $('#exec').textContent = linhas.length ? linhas.join('\n') : 'Nenhuma etapa em andamento.';
+  if (linhas.length) $('#exec').scrollTop = 1e6;
+}
+
+function relatorios(){
+  const r = E.relatorios || [];
+  $('#rels').innerHTML = r.length ? r.map(x =>
+    '<div class="rel"><a href="/relatorios/' + encodeURIComponent(x.nome) + '">' + esc(x.nome) + '</a>' +
+    '<span>' + esc(x.tamanho || '') + '</span></div>').join('')
+    : '<p class="vazio">nenhum relatório gerado ainda</p>';
+}
+
+function render(){
+  const a = (E.ambientes||[]).find(x => x.slug === E.atual);
+  $('#e-amb').textContent = a ? a.nome : 'nenhum';
+  $('#cob-amb').textContent = a ? a.nome : '—';
+  $('#e-ses').innerHTML = '<span class="pulso ' + (E.sessao ? 'pulso--on' : 'pulso--off') + '"></span>' +
+    (E.sessao ? 'ativa' : 'encerrada');
+  tese(); razao(a); ambientes(); execucao(); relatorios();
+}
+
+function assina(e){
+  const c = JSON.parse(JSON.stringify(e));
+  delete c.verificadoEm; delete c.selecao;
+  if (c.tarefa) delete c.tarefa.duracao;
+  if (c.sessaoProc) delete c.sessaoProc.duracao;
+  return JSON.stringify(c);
+}
+
+async function atualizar(forcar){
+  try { E = await api('/api/estado'); }
+  catch (err) {
+    $('#tese-t').innerHTML = 'Painel <em>fora do ar</em>.';
+    $('#tese-p').textContent = 'O processo que serve esta página foi encerrado. Rode "node se.js painel" de novo.';
+    return;
+  }
+  const a = assina(E);
+  if (!forcar && a === assinatura) { execucao(); return; }
+  assinatura = a;
+  render();
+  if (!ARV) carregarArvore(); else desenharArvore();
+}
+atualizar(true);
+setInterval(() => atualizar(false), 3000);
+</script>
